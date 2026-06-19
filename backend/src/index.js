@@ -147,6 +147,9 @@ app.post('/api/offers/scrape', async (req, res) => {
     res.json(metadata);
   } catch (err) {
     res.status(500).json({ error: 'Erro ao fazer scraping do link.' });
+  }
+});
+
 // OCR de Imagem (Print de Tela)
 app.post('/api/offers/ocr', async (req, res) => {
   try {
