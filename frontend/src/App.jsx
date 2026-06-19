@@ -183,7 +183,7 @@ function App() {
       const res = await fetch(`${API_BASE_URL}/offers/scrape`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: newOffer.link })
+        body: JSON.stringify({ url: newOffer.link, prompt: newOffer.description })
       });
       if (res.ok) {
         const data = await res.json();

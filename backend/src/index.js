@@ -134,13 +134,16 @@ app.delete('/api/offers/:id', async (req, res) => {
 // Scraping de Link Shopee
 app.post('/api/offers/scrape', async (req, res) => {
   try {
-    const { url } = req.body;
+    const { url, prompt } = req.body;
     if (!url) {
       return res.status(400).json({ error: 'URL do link é obrigatório.' });
     }
     
-    console.log(`Iniciando scraping do link: ${url}`);
-    const metadata = await scraper.scrapeLink(url);
+    // Busca chaves de API e configurações do banco
+    const settings = await db.getSettings();
+    
+    console.log(`Iniciando scraping do link: ${url} com prompt opcional: "${prompt || ''}"`);
+    const metadata = await scraper.scrapeLink(url, settings, prompt);
     res.json(metadata);
   } catch (err) {
     res.status(500).json({ error: 'Erro ao fazer scraping do link.' });
