@@ -279,6 +279,35 @@ function decodeHtmlEntities(str) {
     .replace(/\\u0026/g, '&');
 }
 
+/**
+ * Envia uma imagem em Base64 para o serviço Python realizar o OCR.
+ */
+async function processOCR(imageBase64, settings = {}) {
+  if (!settings.python_service_url || !settings.python_service_token) {
+    throw new Error('Serviço Python compartilhado não configurado. Ative-o na tela de Ajustes do app.');
+  }
+
+  // Monta a URL de destino para o OCR
+  const ocrUrl = settings.python_service_url.endsWith('/') 
+    ? `${settings.python_service_url}ocr` 
+    : `${settings.python_service_url}/ocr`;
+
+  try {
+    console.log('[Scraper/OCR] Enviando print de tela para o serviço Python...');
+    const result = await callPythonService(
+      ocrUrl,
+      settings.python_service_token,
+      { image_base64: imageBase64 }
+    );
+    return result;
+  } catch (err) {
+    console.error('[Scraper/OCR] Erro na chamada de OCR do Python:', err.message);
+    throw err;
+  }
+}
+
 module.exports = {
-  scrapeLink
+  scrapeLink,
+  processOCR
 };
+

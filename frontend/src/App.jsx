@@ -54,6 +54,7 @@ function App() {
 
   // Estados de controle de UI
   const [loadingScrape, setLoadingScrape] = useState(false);
+  const [loadingOcr, setLoadingOcr] = useState(false);
   const [loadingSave, setLoadingSave] = useState(false);
   const [activeEditOffer, setActiveEditOffer] = useState(null); // Detalhes de oferta sendo editada
   const [toast, setToast] = useState(null);
@@ -204,6 +205,47 @@ function App() {
     } finally {
       setLoadingScrape(false);
     }
+  };
+  
+  const handleOcrUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setLoadingOcr(true);
+    showToast('Processando OCR do print screen...');
+
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64String = reader.result;
+      try {
+        const res = await fetch(`${API_BASE_URL}/offers/ocr`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageBase64: base64String })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setNewOffer(prev => ({
+            ...prev,
+            title: data.title || prev.title || 'Produto Extraído via Print',
+            description: data.text || data.description || prev.description || '',
+            price: data.price || prev.price || '',
+            promoPrice: data.promo_price || prev.promoPrice || '',
+            imageUrl: base64String // Usa o próprio print screen como imagem do anúncio!
+          }));
+          showToast('Texto e preços extraídos via OCR!');
+        } else {
+          const errData = await res.json();
+          showToast(errData.error || 'Falha ao processar OCR da imagem.', 'error');
+        }
+      } catch (err) {
+        showToast('Erro de rede ao processar OCR.', 'error');
+      } finally {
+        setLoadingOcr(false);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleCreateOffer = async (e) => {
@@ -509,6 +551,23 @@ function App() {
                     {loadingScrape ? <Loader2 className="animate-spin" size={16} /> : 'Scrape'}
                   </button>
                 </div>
+              </div>
+
+              <div className="input-group">
+                <label>📷 Upload de Print da Tela (Opcional - OCR de Preço/Texto)</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="input-control"
+                  onChange={handleOcrUpload}
+                  disabled={loadingOcr}
+                />
+                {loadingOcr && (
+                  <span style={{ fontSize: '0.8rem', color: 'var(--whatsapp-green)', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.25rem' }}>
+                    <Loader2 className="animate-spin" size={12} />
+                    Extraindo dados da imagem via OCR...
+                  </span>
+                )}
               </div>
 
               {newOffer.imageUrl && (

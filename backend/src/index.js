@@ -147,6 +147,22 @@ app.post('/api/offers/scrape', async (req, res) => {
     res.json(metadata);
   } catch (err) {
     res.status(500).json({ error: 'Erro ao fazer scraping do link.' });
+// OCR de Imagem (Print de Tela)
+app.post('/api/offers/ocr', async (req, res) => {
+  try {
+    const { imageBase64 } = req.body;
+    if (!imageBase64) {
+      return res.status(400).json({ error: 'A imagem em base64 é obrigatória.' });
+    }
+    
+    // Busca chaves do banco de dados (settings)
+    const settings = await db.getSettings();
+    
+    console.log('[API] Recebida requisição de OCR de print screen.');
+    const ocrResult = await scraper.processOCR(imageBase64, settings);
+    res.json(ocrResult);
+  } catch (err) {
+    res.status(500).json({ error: err.message || 'Erro ao processar OCR da imagem.' });
   }
 });
 
